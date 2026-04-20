@@ -9,10 +9,11 @@ exports.createHabit = async (req, res) => {
       return res.status(400).json({ message: "Habit name is required" });
     }
 
-    const habit = await Habit.create({
-      userId: req.user.id,
-      name,
-    });
+   const habit = new Habit({
+    name,
+    target, // 🔥 add this
+    userId: req.user.id,
+   });
 
     res.status(201).json(habit);
 
