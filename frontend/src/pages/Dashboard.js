@@ -229,7 +229,7 @@ onMouseLeave={(e) => {
             >
               <div
                 style={{
-                  width: `${Math.min((habit.streak / habit.target) * 100, 100)}%`,
+                  width: `${habit.target ? Math.min((habit.streak / habit.target) * 100, 100) : 0}%`,
                   background: "#f59e0b",
                   height: "100%",
                 }}

@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "https://productivity-app-5jb3.onrender.com/api"
+  baseURL: "http://localhost:5000/api"
 });
 
 // Attach token automatically

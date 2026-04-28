@@ -15,6 +15,8 @@ exports.createHabit = async (req, res) => {
     userId: req.user.id,
    });
 
+    await habit.save();
+
     res.status(201).json(habit);
 
   } catch (error) {

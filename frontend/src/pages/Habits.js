@@ -18,18 +18,18 @@ const Habits = () => {
     fetchHabits();
   }, []);
 
-  const handleAddHabit = async () => {
-    try {
-      await API.post("/habits", { name, target });
-
-      setName("");
-      setTarget("");
-      fetchHabits();
-
-    } catch (error) {
-      console.error(error.response?.data || error.message);
-    }
-  };
+const handleAddHabit = async () => {
+  if (!name.trim() || !target) return alert("Please enter a habit name and target days.");
+  try {
+    await API.post("/habits", { name, target: parseInt(target) });
+    setName("");
+    setTarget("");
+    fetchHabits();
+  } catch (error) {
+    console.error(error.response?.data || error.message);
+    alert("Failed to add habit: " + (error.response?.data?.message || error.message));
+  }
+};
    const handleComplete = async (id) => {
   try {
     console.log("Clicked habit:", id);
