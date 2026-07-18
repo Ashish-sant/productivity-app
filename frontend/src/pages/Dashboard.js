@@ -1,12 +1,24 @@
 import { useEffect, useState } from "react";
 import API from "../services/api";
-import {
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-  Legend,
-} from "recharts";
+import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts";
+
+// Reusable card classes (replaces the repeated inline hover handlers).
+const cardCls =
+  "card transition-all duration-200 hover:shadow-card-hover hover:-translate-y-1";
+
+// A small stat block: big number + label.
+const Stat = ({ value, label, color }) => (
+  <div className="text-center">
+    <p className={`text-3xl font-semibold ${color}`}>{value}</p>
+    <p className="text-sm text-ink-muted mt-1">{label}</p>
+  </div>
+);
+
+// A skeleton placeholder shown while data loads.
+const Skeleton = () => (
+  <div className="card animate-pulse h-32 bg-sage-light" />
+);
+
 const Dashboard = () => {
   const [taskStats, setTaskStats] = useState(null);
   const [habitStats, setHabitStats] = useState(null);
@@ -14,43 +26,31 @@ const Dashboard = () => {
   const [insights, setInsights] = useState([]);
   const [trend, setTrend] = useState(null);
   const [habits, setHabits] = useState([]);
-  const chartData = taskStats
-  ? [
-      { name: "Completed", value: taskStats.completedTasks },
-      { name: "Pending", value: taskStats.pendingTasks },
-    ]
-  : [];
-  const cardStyle = {
-  background: "white",
-  padding: "20px",
-  borderRadius: "10px",
-  boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
-  transition: "all 0.2s ease",
-};
+  const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
     try {
-      const taskRes = await API.get("/analytics/tasks");
-      console.log("Task:", taskRes.data);
+      // Fetch all analytics endpoints in parallel instead of one-by-one.
+      const [taskRes, habitRes, scoreRes, insightRes, trendRes, habitsListRes] =
+        await Promise.all([
+          API.get("/analytics/tasks"),
+          API.get("/analytics/habits"),
+          API.get("/analytics/score"),
+          API.get("/analytics/insights"),
+          API.get("/analytics/trend"),
+          API.get("/habits"),
+        ]);
 
-      const habitRes = await API.get("/analytics/habits");
-      console.log("Habit:", habitRes.data);
-
-      const scoreRes = await API.get("/analytics/score");
-      console.log("Score:", scoreRes.data);
-
-      const insightRes = await API.get("/analytics/insights");
-      const trendRes = await API.get("/analytics/trend");
-      const habitsListRes = await API.get("/habits");
-      setHabits(habitsListRes.data);
-      setTrend(trendRes.data);
-      setInsights(insightRes.data.insights);
       setTaskStats(taskRes.data);
       setHabitStats(habitRes.data);
       setScore(scoreRes.data);
-
+      setInsights(insightRes.data.insights);
+      setTrend(trendRes.data);
+      setHabits(habitsListRes.data);
     } catch (error) {
       console.error("ERROR:", error.response?.data || error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -58,270 +58,224 @@ const Dashboard = () => {
     fetchData();
   }, []);
 
+  const chartData = taskStats
+    ? [
+        { name: "Completed", value: taskStats.completedTasks },
+        { name: "Pending", value: taskStats.pendingTasks },
+      ]
+    : [];
+
+  const completionPct =
+    taskStats && taskStats.totalTasks > 0
+      ? (taskStats.completedTasks / taskStats.totalTasks) * 100
+      : 0;
+
+  // New user with no data at all → friendly empty state.
+  const isEmpty =
+    taskStats?.totalTasks === 0 && habitStats?.totalHabits === 0;
+
   return (
-   <div style={{
-  maxWidth: "900px",
-  margin: "auto",
-  display: "flex",
-  flexDirection: "column",
-  gap: "20px"
-}}>
-      <h1 style={{ marginBottom: "10px" }}>Dashboard </h1>
-<p style={{ color: "#6b7280", marginBottom: "10px" }}>
-  Overview of your productivity
-</p>
-
-     {taskStats && (
-  <div
-    style={{
-      display: "grid",
-      gridTemplateColumns: "1fr 1fr",
-      gap: "20px",
-      marginTop: "20px",
-    }}
-  >
-
-    {/* Task Stats */}
-    <div style={cardStyle}
-    onMouseEnter={(e) => {
-  e.currentTarget.style.transform = "translateY(-4px)";
-  e.currentTarget.style.boxShadow = "0 8px 20px rgba(0,0,0,0.12)";
-}}
-onMouseLeave={(e) => {
-  e.currentTarget.style.transform = "translateY(0)";
-  e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.08)";
-}}
-    >
-      <h3 style={{ marginBottom: "15px" }}>📋 Task Stats</h3>
-
-      <div style={{ display: "flex", justifyContent: "space-between" }}>
-        {[
-          { label: "Total", value: taskStats.totalTasks, color: "#111827" },
-          { label: "Completed", value: taskStats.completedTasks, color: "#22c55e" },
-          { label: "Pending", value: taskStats.pendingTasks, color: "#ef4444" },
-        ].map((item, index) => (
-          <div key={index} style={{ textAlign: "center" }}>
-            <h1 style={{ fontSize: "28px", margin: 0, color: item.color }}>
-              {item.value}
-            </h1>
-            <p style={{ fontSize: "14px", color: "#6b7280" }}>
-              {item.label}
-            </p>
-          </div>
-        ))}
-        
+    <div className="max-w-4xl mx-auto px-4 py-10 space-y-5">
+      <div>
+        <h1 className="text-2xl font-semibold">Dashboard</h1>
+        <p className="text-ink-muted text-sm mt-1">
+          Overview of your productivity
+        </p>
       </div>
-      <div style={{ marginTop: "20px" }}>
-  <p style={{ fontSize: "14px", marginBottom: "5px" }}>
-    Completion Rate
-  </p>
 
-  <div
-    style={{
-      background: "#e5e7eb",
-      borderRadius: "10px",
-      height: "20px",
-      overflow: "hidden",
-    }}
-  >
-    <div
-      style={{
-        width: `${taskStats.totalTasks === 0 ? 0 : (taskStats.completedTasks / taskStats.totalTasks) * 100}%`,
-        background: "#22c55e",
-        height: "100%",
-      }}
-    ></div>
-  </div>
-</div>
-    </div>
-
-    {/* Chart */}
-    <div style={{ ...cardStyle, textAlign: "center" }}
-    onMouseEnter={(e) => {
-  e.currentTarget.style.transform = "translateY(-4px)";
-  e.currentTarget.style.boxShadow = "0 8px 20px rgba(0,0,0,0.12)";
-}}
-onMouseLeave={(e) => {
-  e.currentTarget.style.transform = "translateY(0)";
-  e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.08)";
-}}
-    >
-      <h3>📊 Task Distribution</h3>
-
-      <PieChart width={250} height={250}>
-        <Pie
-          data={chartData}
-          cx="50%"
-          cy="50%"
-          outerRadius={80}
-          dataKey="value"
-          label
-        >
-          <Cell fill="#22c55e" />
-          <Cell fill="#ef4444" />
-        </Pie>
-
-        <Tooltip />
-        <Legend />
-      </PieChart>
-    </div>
-
-  </div>
-)}
-{habitStats && (
-  <div
-    style={{ ...cardStyle, marginTop: "20px" }}
-    onMouseEnter={(e) => {
-      e.currentTarget.style.transform = "translateY(-4px)";
-      e.currentTarget.style.boxShadow = "0 8px 20px rgba(0,0,0,0.12)";
-    }}
-    onMouseLeave={(e) => {
-      e.currentTarget.style.transform = "translateY(0)";
-      e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.08)";
-    }}
-  >
-    <h3 style={{ marginBottom: "15px" }}>🔥 Habit Stats</h3>
-
-    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "20px" }}>
-      {[
-        { label: "Total", value: habitStats.totalHabits, color: "#111827" },
-        { label: "Active", value: habitStats.activeHabits, color: "#3b82f6" },
-        { label: "Avg Streak", value: habitStats.averageStreak, color: "#f59e0b" },
-      ].map((item, index) => (
-        <div key={index} style={{ textAlign: "center" }}>
-          <h1 style={{ fontSize: "28px", margin: 0, color: item.color }}>
-            {item.value}
-          </h1>
-          <p style={{ fontSize: "14px", color: "#6b7280" }}>
-            {item.label}
+      {loading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <Skeleton />
+          <Skeleton />
+          <Skeleton />
+          <Skeleton />
+        </div>
+      ) : isEmpty ? (
+        <div className="card text-center py-12">
+          <p className="text-ink-soft font-medium text-lg">
+            Nothing to show yet
+          </p>
+          <p className="text-ink-muted text-sm mt-1">
+            Add some tasks and habits, and your productivity overview will
+            appear here.
           </p>
         </div>
-      ))}
-    </div>
+      ) : (
+        <>
+          {/* Top row: task stats + distribution chart */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {taskStats && (
+              <div className={cardCls}>
+                <h3 className="text-base font-semibold mb-4">Task stats</h3>
+                <div className="flex justify-between">
+                  <Stat
+                    value={taskStats.totalTasks}
+                    label="Total"
+                    color="text-ink"
+                  />
+                  <Stat
+                    value={taskStats.completedTasks}
+                    label="Completed"
+                    color="text-brand"
+                  />
+                  <Stat
+                    value={taskStats.pendingTasks}
+                    label="Pending"
+                    color="text-peach-dark"
+                  />
+                </div>
+                <div className="mt-5">
+                  <p className="text-sm text-ink-soft mb-1">Completion rate</p>
+                  <div className="h-3 bg-sage-light rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-brand rounded-full transition-all"
+                      style={{ width: `${completionPct}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
 
-    {/* Habit Streaks */}
-    {habits.length > 0 && (
-      <div>
-        <h3 style={{ marginBottom: "10px" }}>🔥 Habit Streaks</h3>
-
-        {habits.map((habit) => (
-          <div
-            key={habit._id}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              marginBottom: "10px",
-            }}
-          >
-            <span style={{ width: "100px" }}>
-              🔥 {habit.name}
-            </span>
-
-            <div
-              style={{
-                flex: 1,
-                background: "#e5e7eb",
-                borderRadius: "6px",
-                height: "20px",
-                margin: "0 10px",
-                overflow: "hidden",
-              }}
-            >
-              <div
-                style={{
-                  width: `${habit.target ? Math.min((habit.streak / habit.target) * 100, 100) : 0}%`,
-                  background: "#f59e0b",
-                  height: "100%",
-                }}
-              ></div>
-            </div>
-
-            <span>
-              ({habit.streak} / {habit.target})
-            </span>
+            {taskStats && (
+              <div className={cardCls}>
+                <h3 className="text-base font-semibold mb-2 text-center">
+                  Task distribution
+                </h3>
+                <div style={{ width: "100%", height: 220 }}>
+                  <ResponsiveContainer>
+                    <PieChart>
+                      <Pie
+                        data={chartData}
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={80}
+                        dataKey="value"
+                        label
+                      >
+                        <Cell fill="#007A33" />
+                        <Cell fill="#FFCCBC" />
+                      </Pie>
+                      <Tooltip />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            )}
           </div>
-        ))}
-      </div>
-    )}
-  </div>
-)}
-      {/* Productivity Score */}
-      {score && (
-  <div style={{ ...cardStyle, marginTop: "20px", textAlign: "center" }}
-  onMouseEnter={(e) => {
-  e.currentTarget.style.transform = "translateY(-4px)";
-  e.currentTarget.style.boxShadow = "0 8px 20px rgba(0,0,0,0.12)";
-}}
-onMouseLeave={(e) => {
-  e.currentTarget.style.transform = "translateY(0)";
-  e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.08)";
-}}
-  >
-    <h3>⚡ Productivity Score</h3>
-    <h1 style={{ fontSize: "40px", color: "#2563eb" }}>
-      {score.productivityScore}
-    </h1>
-  </div>
-)}
 
-      {insights.length > 0 && (
-  <div style={{ ...cardStyle, marginTop: "20px" }}
-  onMouseEnter={(e) => {
-  e.currentTarget.style.transform = "translateY(-4px)";
-  e.currentTarget.style.boxShadow = "0 8px 20px rgba(0,0,0,0.12)";
-}}
-onMouseLeave={(e) => {
-  e.currentTarget.style.transform = "translateY(0)";
-  e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.08)";
-}}
-  >
-    <h3 style={{ marginBottom: "10px" }}>🧠 Insights</h3>
+          {/* Habit stats + streaks */}
+          {habitStats && (
+            <div className={cardCls}>
+              <h3 className="text-base font-semibold mb-4">Habit stats</h3>
+              <div className="flex justify-between mb-5">
+                <Stat
+                  value={habitStats.totalHabits}
+                  label="Total"
+                  color="text-ink"
+                />
+                <Stat
+                  value={habitStats.activeHabits}
+                  label="Active"
+                  color="text-brand-soft"
+                />
+                <Stat
+                  value={habitStats.averageStreak}
+                  label="Avg streak"
+                  color="text-peach-dark"
+                />
+              </div>
 
-    <ul style={{ paddingLeft: "20px", lineHeight: "1.8" }}>
-      {insights.map((item, index) => (
-        <li key={index} style={{ marginBottom: "5px" }}>
-          {item}
-        </li>
-      ))}
-    </ul>
-  </div>
-)}
-      {/* Weekly Trend */}
-      {trend && (
-  <div style={{ ...cardStyle, marginTop: "20px" }}
-  onMouseEnter={(e) => {
-  e.currentTarget.style.transform = "translateY(-4px)";
-  e.currentTarget.style.boxShadow = "0 8px 20px rgba(0,0,0,0.12)";
-}}
-onMouseLeave={(e) => {
-  e.currentTarget.style.transform = "translateY(0)";
-  e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.08)";
-}}
-  >
-    <h3 style={{ marginBottom: "10px" }}>📈 Weekly Trend</h3>
+              {habits.length > 0 && (
+                <div className="space-y-3 pt-2 border-t border-line">
+                  <p className="text-sm font-medium text-ink-soft pt-2">
+                    Streaks
+                  </p>
+                  {habits.map((habit) => {
+                    const target = habit.target || 30;
+                    const pct = Math.min((habit.streak / target) * 100, 100);
+                    return (
+                      <div key={habit._id} className="flex items-center gap-3">
+                        <span className="w-28 truncate text-sm">
+                          {habit.name}
+                        </span>
+                        <div className="flex-1 h-2 bg-sage-light rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-mint rounded-full"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                        <span className="text-xs text-ink-muted w-12 text-right">
+                          {habit.streak}/{target}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
 
-    <p>Last Week: {trend.lastWeekRate}%</p>
-    <p>Previous Week: {trend.prevWeekRate}%</p>
+          {/* Productivity score */}
+          {score && (
+            <div className={`${cardCls} text-center`}>
+              <h3 className="text-base font-semibold mb-2">
+                Productivity score
+              </h3>
+              <p className="text-5xl font-semibold text-brand">
+                {score.productivityScore}
+              </p>
+            </div>
+          )}
 
-    <p
-      style={{
-        fontWeight: "bold",
-        color:
-          trend.trend === "improving"
-            ? "green"
-            : trend.trend === "declining"
-            ? "red"
-            : "gray",
-      }}
-    >
-      Status: {trend.trend}
-    </p>
+          {/* Insights */}
+          {insights.length > 0 && (
+            <div className={cardCls}>
+              <h3 className="text-base font-semibold mb-3">Insights</h3>
+              <ul className="space-y-2">
+                {insights.map((item, index) => (
+                  <li key={index} className="flex gap-2 text-ink-soft text-sm">
+                    <span className="text-brand">•</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
-    <p style={{ marginTop: "10px", fontStyle: "italic" }}>
-      {trend.message}
-    </p>
-  </div>
-)}
+          {/* Weekly trend */}
+          {trend && (
+            <div className={cardCls}>
+              <h3 className="text-base font-semibold mb-3">Weekly trend</h3>
+              <div className="flex gap-8 mb-3">
+                <div>
+                  <p className="text-xs text-ink-muted">Last week</p>
+                  <p className="text-xl font-semibold">{trend.lastWeekRate}%</p>
+                </div>
+                <div>
+                  <p className="text-xs text-ink-muted">Previous week</p>
+                  <p className="text-xl font-semibold">{trend.prevWeekRate}%</p>
+                </div>
+              </div>
+              <span
+                className={[
+                  "inline-block text-xs font-medium px-2 py-1 rounded-full capitalize",
+                  trend.trend === "improving"
+                    ? "bg-mint text-brand"
+                    : trend.trend === "declining"
+                    ? "bg-danger-soft text-danger"
+                    : "bg-sage text-ink-soft",
+                ].join(" ")}
+              >
+                {trend.trend}
+              </span>
+              <p className="text-sm text-ink-soft mt-3 italic">
+                {trend.message}
+              </p>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 };

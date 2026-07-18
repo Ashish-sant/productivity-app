@@ -1,3 +1,50 @@
+/* ---- Load Inter (the app's typeface) ---- */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ---- Global base layer: applied to the whole app ---- */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-sage-lighter text-ink font-sans antialiased;
+    /* warm off-white background + green-tinted ink text, inherited everywhere */
+  }
+
+  /* Headings default to the brand ink color and medium weight */
+  h1, h2, h3, h4 {
+    @apply text-ink font-semibold;
+  }
+
+  /* Consistent focus ring in the brand color for accessibility */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-brand/40 ring-offset-1 ring-offset-sage-lighter;
+  }
+}
+
+/* ---- Small reusable component classes (optional shortcuts) ---- */
+@layer components {
+  /* A base card style you can reuse: <div className="card"> */
+  .card {
+    @apply bg-white rounded-card shadow-card p-5 border border-line;
+  }
+
+  /* Primary button base: <button className="btn-primary"> */
+  .btn-primary {
+    @apply bg-brand text-white px-4 py-2 rounded-lg font-medium
+           transition-colors hover:bg-brand-hover
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  /* Text input base: <input className="input" /> */
+  .input {
+    @apply w-full px-3 py-2 rounded-lg border border-line bg-white
+           text-ink placeholder:text-ink-muted
+           transition-colors focus:border-brand;
+  }
+}
