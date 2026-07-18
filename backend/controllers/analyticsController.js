@@ -211,24 +211,14 @@ exports.getWeeklyTrend = async (req, res) => {
         ? 0
         : (prevWeekCompleted / prevWeekTasks.length) * 100;
 
-    // TREND
+    // TREND (single decision block — no duplication)
     let trend = "same";
     let message = "Your productivity is consistent.";
 
     if (lastWeekTasks.length === 0 && prevWeekTasks.length === 0) {
       trend = "no-data";
       message = "No activity in the last two weeks. Start adding tasks!";
-    } 
-    else if (lastWeekRate > prevWeekRate) {
-      trend = "improving";
-      message = "Your productivity improved this week 🔥";
-    } 
-    else if (lastWeekRate < prevWeekRate) {
-      trend = "declining";
-      message = "Your productivity dropped. Try to refocus.";
-    }
-
-    if (lastWeekRate > prevWeekRate) {
+    } else if (lastWeekRate > prevWeekRate) {
       trend = "improving";
       message = "Your productivity improved this week 🔥";
     } else if (lastWeekRate < prevWeekRate) {

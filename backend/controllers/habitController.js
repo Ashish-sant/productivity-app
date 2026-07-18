@@ -9,16 +9,15 @@ exports.createHabit = async (req, res) => {
       return res.status(400).json({ message: "Habit name is required" });
     }
 
-   const habit = new Habit({
-    name,
-    target, // 🔥 add this
-    userId: req.user.id,
-   });
+    const habit = new Habit({
+      name,
+      target,
+      userId: req.user.id,
+    });
 
     await habit.save();
 
     res.status(201).json(habit);
-
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -40,40 +39,48 @@ exports.completeHabit = async (req, res) => {
       return res.status(403).json({ message: "Unauthorized" });
     }
 
-    const today = new Date();
-    const lastDate = habit.lastCompletedDate;
+    const now = new Date();
 
-    // Normalize dates (remove time part)
-    const todayDate = new Date(today.setHours(0, 0, 0, 0));
+    // Build a fresh midnight copy for TODAY without mutating `now`.
+    const todayMidnight = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate()
+    );
 
     let streak = habit.streak;
 
-    if (lastDate) {
-      const lastCompleted = new Date(lastDate.setHours(0, 0, 0, 0));
+    if (habit.lastCompletedDate) {
+      // Build a fresh midnight copy for the LAST completion date too.
+      const last = new Date(habit.lastCompletedDate);
+      const lastMidnight = new Date(
+        last.getFullYear(),
+        last.getMonth(),
+        last.getDate()
+      );
 
-      const diffTime = todayDate - lastCompleted;
-      const diffDays = diffTime / (1000 * 60 * 60 * 24);
+      const diffDays =
+        (todayMidnight - lastMidnight) / (1000 * 60 * 60 * 24);
 
       if (diffDays === 1) {
-        // Continue streak
+        // Completed on consecutive day → continue the streak
         streak += 1;
       } else if (diffDays > 1) {
-        // Streak broken
+        // A day (or more) was missed → streak resets
         streak = 1;
       }
-      // if same day → do nothing
+      // diffDays === 0 (same day) → do nothing, no double count
     } else {
-      // First time completion
+      // First ever completion
       streak = 1;
     }
 
     habit.streak = streak;
-    habit.lastCompletedDate = today;
+    habit.lastCompletedDate = now; // store the real timestamp, not a mutated one
 
     await habit.save();
 
     res.json(habit);
-
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -82,11 +89,11 @@ exports.completeHabit = async (req, res) => {
 // GET ALL HABITS (user-specific)
 exports.getHabits = async (req, res) => {
   try {
-    const habits = await Habit.find({ userId: req.user.id })
-      .sort({ createdAt: -1 });
+    const habits = await Habit.find({ userId: req.user.id }).sort({
+      createdAt: -1,
+    });
 
     res.json(habits);
-
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
