@@ -1,0 +1,64 @@
+{
+  "kpis": {
+    "total_students": 20000,
+    "avg_productivity": 50.2,
+    "avg_study_hours": 5.3,
+    "avg_sleep_hours": 6.5,
+    "avg_screen_time": 16.2
+  },
+  "by_sleep": [
+    {
+      "category": "Over",
+      "students": 2913,
+      "avg_productivity": 58.7
+    },
+    {
+      "category": "Optimal",
+      "students": 5688,
+      "avg_productivity": 54.2
+    },
+    {
+      "category": "Under",
+      "students": 11399,
+      "avg_productivity": 46.0
+    }
+  ],
+  "by_screen_quartile": [
+    {
+      "quartile": 1,
+      "avg_productivity": 55.1
+    },
+    {
+      "quartile": 2,
+      "avg_productivity": 51.5
+    },
+    {
+      "quartile": 3,
+      "avg_productivity": 48.8
+    },
+    {
+      "quartile": 4,
+      "avg_productivity": 45.3
+    }
+  ],
+  "by_band": [
+    {
+      "band": "Medium",
+      "students": 12139,
+      "avg_study": 5.8,
+      "avg_screen": 16.0
+    },
+    {
+      "band": "Low",
+      "students": 5540,
+      "avg_study": 2.7,
+      "avg_screen": 17.5
+    },
+    {
+      "band": "High",
+      "students": 2321,
+      "avg_study": 8.4,
+      "avg_screen": 14.4
+    }
+  ]
+}

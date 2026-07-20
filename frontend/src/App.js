@@ -5,50 +5,57 @@ import Signup from "./pages/Signup";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Tasks from "./pages/Tasks";
 import Habits from "./pages/Habits";
+import FocusLab from "./pages/FocusLab";
 import Navbar from "./components/Navbar";
+
 function App() {
   return (
     <Router>
-      <div style={{ backgroundColor: "#f3f4f6", minHeight: "100vh" }}>
-        
+      {/* min-h-screen lets the global bg-sage-lighter (from index.css) show through */}
+      <div className="min-h-screen">
         <Navbar />
 
-        <div style={{ padding: "20px" }}>
-          <Routes>
-            <Route path="/" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
+        <Routes>
+          <Route path="/" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
 
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              }
-            />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
 
-            <Route
-              path="/tasks"
-              element={
-                <ProtectedRoute>
-                  <Tasks />
-                </ProtectedRoute>
-              }
-            />
+          <Route
+            path="/tasks"
+            element={
+              <ProtectedRoute>
+                <Tasks />
+              </ProtectedRoute>
+            }
+          />
 
-            <Route
-              path="/habits"
-              element={
-                <ProtectedRoute>
-                  <Habits />
-                </ProtectedRoute>
-              }
-            />
-          </Routes>
-        </div>
+          <Route
+            path="/habits"
+            element={
+              <ProtectedRoute>
+                <Habits />
+              </ProtectedRoute>
+            }
+          />
 
+          <Route
+            path="/focus-lab"
+            element={
+              <ProtectedRoute>
+                <FocusLab />
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
       </div>
-      
     </Router>
   );
 }

@@ -45,6 +45,9 @@ const Navbar = () => {
           <NavLink to="/habits" className={linkClass}>
             Habits
           </NavLink>
+          <NavLink to="/focus-lab" className={linkClass}>
+            Focus Lab
+          </NavLink>
 
           <button
             onClick={handleLogout}
