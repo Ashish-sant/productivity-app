@@ -112,7 +112,7 @@ DATABASE_URL=your_neon_postgres_connection_string
 The Power BI dashboard (`data-pipeline/powerbi/`) visualizes the Focus Lab findings —
 KPI cards, productivity by sleep hours, productivity by study hours, and productivity
 by phone usage, with a gender slicer for interactivity.
-![Focus Lab Dashboard](data-pipeline/powerbi/focuslab_dashboard.png)
+![Focus Lab Dashboard](data-pipeline/powerBI/focuslab_dashboard.png)
 
 
 ## Author
